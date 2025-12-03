@@ -10,6 +10,13 @@
 // +----------------------------------------------------------------------
 use think\facade\Route;
 
+// User
+Route::get('/getUserList', 'User/getUserList');
+Route::get('/getUser', 'User/getUser');
+Route::post('/addUser', 'User/addUser');
+Route::post('/updateUser', 'User/updateUser');
+Route::post('/deleteUser', 'User/deleteUser');
+
 // UserCenter
 Route::post('/userLogin', 'UserCenter/login');
 Route::post('/userLogout', 'UserCenter/logout');

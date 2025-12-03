@@ -2,7 +2,6 @@
 
 namespace app\model;
 
-use think\facade\Config;
 use think\facade\Db;
 
 class UserCenter
@@ -13,8 +12,8 @@ class UserCenter
         // 用户验证
         $field = 'u.id,u.user,u.password,u.nick_name,r.role_name,r.role_sort,r.permission_edit';
         $where[] = ['u.user', '=', $params['user']];
-        $where[] = ['u.del_flag', '<>', Config::get('common.delete_flag')];
-        $where[] = ['r.del_flag', '<>', Config::get('common.delete_flag')];
+        $where[] = ['u.del_flag', '<>', config('common.delete_flag')];
+        $where[] = ['r.del_flag', '<>', config('common.delete_flag')];
         $user = Db::connect('mysql')
             ->table('user')
             ->alias('u')

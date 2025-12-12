@@ -3,12 +3,13 @@
 namespace app\controller;
 
 use app\BaseController;
+use think\response\Json;
 
 class Base extends BaseController
 {
     /**
      * 全局验证前端数据
-     * @return \think\response\Json
+     * @return Json
      */
     public function callModel()
     {

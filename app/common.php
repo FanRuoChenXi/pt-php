@@ -1,16 +1,17 @@
 <?php
 // 应用公共文件
-use think\facade\Db;
+use think\App;
+use think\response\Json;
 
 /**
  * 通用化API数据格式输出
- * @param $status 业务代码
+ * @param $status *业务代码
  * @param string $message
- * @param $data 返回数据
- * @param $httpStatus HTTP状态码
- * @return \think\response\Json
+ * @param array $data *返回数据
+ * @param int $httpStatus *HTTP状态码
+ * @return Json
  */
-function show($status, string $message = '', $data = [], $httpStatus = 200)
+function show($status, string $message = '', array $data = [], int $httpStatus = 200): Json
 {
     $result = [
         "status" => $status,
@@ -22,8 +23,9 @@ function show($status, string $message = '', $data = [], $httpStatus = 200)
 
 /**
  * 设置token
- * @param $data
+ * @param $user
  * @return void
+ * @throws \Random\RandomException
  */
 function setToken($user)
 {
@@ -36,9 +38,9 @@ function setToken($user)
 
 /**
  * 验证token
- * @return false|mixed|object|\think\App
+ * @return array
  */
-function checkToken()
+function checkToken(): array
 {
     $token = cookie('PT_TOKEN');
     if (empty($token)) {
@@ -66,7 +68,7 @@ function deleteToken()
 
 /**
  * 获取用户缓存信息
- * @return mixed|object|\think\App
+ * @return mixed|object|App
  */
 function getUserCache()
 {
@@ -75,34 +77,60 @@ function getUserCache()
 }
 
 /**
- * 格式化北京时间
- * @param string $date
- * @return string
- * @throws Exception
+ * curl get请求
+ * @param $url
+ * @param string $user_agent
+ * @param string $Authorization
+ * @return mixed
  */
-function dateFormat(string $date)
+function curl_get($url, string $user_agent = '', string $Authorization = '')
 {
-    // 创建DateTime对象并指定时区为UTC
-    $dateTime = new DateTime($date, new DateTimeZone('UTC'));
-    // 转换为北京时间（东八区）
-    $dateTime->setTimezone(new DateTimeZone('Asia/Shanghai'));
-    // 输出转换后的时间
-    return $dateTime->format('Y-m-d H:i:s');
+    $headerArray = [
+        'Content-type' => 'application/json; charset=utf-8',
+        'Accept' => 'application/json',
+        'User-Agent' => !empty($user_agent) ? $user_agent : '',
+        'Authorization' => !empty($Authorization) ? $Authorization : '',
+    ];
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $headerArray);
+    $result = curl_exec($curl);
+    curl_close($curl);
+    return json_decode($result, true);
 }
 
 /**
- * array转变为得到key-value
- * @param $list
- * @param $id_name
- * @return array
+ * curl post请求
+ * @param $url
+ * @param $data
+ * @param string $user_agent
+ * @param string $Authorization
+ * @param int $time_out
+ * @return mixed
  */
-function getKeyValue($list, $id_name)
+function curl_post($url, $data, string $user_agent = '', string $Authorization = '', int $time_out = 100)
 {
-    $key_value = [];
-    foreach ($list as $item) {
-        $key_value[$item[$id_name]] = $item;
-    }
-    return $key_value;
+    $headerArray = [
+        'Content-type' => 'application/json; charset=utf-8',
+        'Accept' => 'application/json',
+        'User-Agent' => !empty($user_agent) ? $user_agent : '',
+        'Authorization' => !empty($Authorization) ? $Authorization : '',
+    ];
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+    curl_setopt($curl, CURLOPT_POST, 1);
+    curl_setopt($curl, CURLOPT_TIMEOUT, $time_out);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($curl, CURLOPT_HTTPHEADER, $headerArray);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    $result = curl_exec($curl);
+    curl_close($curl);
+    return json_decode($result, true);
 }
 
 /**
@@ -123,46 +151,11 @@ function injectData(array $inject_data, array $inject_list, $params): array
 }
 
 /**
- * 处理默认日期
- * @param array $check_data
- * @return array
- */
-function checkDefaultDate(array $check_data): array
-{
-    foreach ($check_data as $key => $item) {
-        $item = $item == '2000-01-01' ? '' : $item;
-        $check_data[$key] = $item;
-    }
-    return $check_data;
-}
-
-/**
- * 原生sql查询
- * @param array $sql
- * @param array $arr
- * @return mixed
- */
-function querySql(array $sql, array $arr)
-{
-    $data_sql = $sql['sql'];
-    $where_sql = $sql['where'];
-    $page_sql = $sql['page'];
-    $where_arr = $arr['where'];
-    $page_arr = $arr['page'];
-    if (!empty($where_arr)) {
-        $list = Db::query($data_sql . $where_sql . $page_sql, array_merge($page_arr, $where_arr));
-    } else {
-        $list = Db::query($data_sql . $where_sql . $page_sql, $page_arr);
-    }
-    return $list;
-}
-
-/**
  * 删除文件
  * @param $file_url
  * @return array
  */
-function deleteFile($file_url)
+function deleteFile($file_url): array
 {
     // 要删除的文件路径
     $root_path = dirname(root_path());
